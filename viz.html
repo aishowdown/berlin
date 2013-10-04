@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <script type="text/javascript" src="./viz_scripts/prototype.js"></script>
+        <script type="text/javascript" src="./viz_scripts/jsonp.js"></script>
+        <script type="text/javascript" src="./viz_scripts/thirdside.js"></script>
+        <script type="text/javascript" src="./viz_scripts/raphael/raphael.js"></script>
+        <script type="text/javascript" src="./viz_scripts/raphael/g.raphael.js"></script>
+        <script type="text/javascript" src="./viz_scripts/raphael/g.pie.js"></script>
+        <script type="text/javascript" src="./viz_scripts/raphael/raphael-animate-along.js"></script>
+        <script type="text/javascript" src="./viz_scripts/drawable.js"></script>
+        <script type="text/javascript" src="./viz_scripts/animated.js"></script>
+        <script type="text/javascript" src="./viz_scripts/node.js"></script>
+        <script type="text/javascript" src="./viz_scripts/svg.js"></script>
+        <script type="text/javascript" src="./viz_scripts/player.js"></script>
+        <script type="text/javascript" src="./viz_scripts/playback_description.js"></script>
+        <script type="text/javascript" src="./viz_scripts/playback.js"></script>
+        <script type="text/javascript" src="./viz_scripts/simulator.js"></script>
+    </head>
+    <body>
+        <div id="player_list">
+            <div id="info_player_0">
+              <div class="color" style="width: 30px; height: 30px;"></div>
+              <span class="soldiers"></span>
+              <span class="nodes"></span>
+              <span class="score"></span>
+            </div>
+            <div id="info_player_1">
+              <div class="color" style="width: 30px; height: 30px;"></div>
+              <span class="soldiers"></span>
+              <span class="nodes"></span>
+              <span class="score"></span>
+            </div>
+        </div>
+        <div id="controls">
+            <div id="rewind">Rewind</div>
+            <div id="back">Back</div>
+            <div id="play">Play</div>
+            <div id="pause">Pause</div>
+            <div id="next">Next</div>
+            <div id="end">End</div>
+        </div>
+        <div id="progress_bar" style="height: 10px; background-color: black;"></div>
+        <div id="turns"></div>
+        <div id="map" style="position: relative; width: 960px; height: 500px;"></div>
+        <script type="text/javascript">
+            var containers = {
+              "map": "map",
+              "controls": "controls",
+              "player_list": "player-list",
+              "progress_bar": "progress_bar",
+              "turns": "turns"
+            };
+
+            window.logsCallback = function(response){
+              console.log(response);
+              new TS.AIPlayback(
+                    containers,
+                    response.game,
+                    { local: true, assets_path: "./viz_scripts" }
+                  );
+            }
+
+            document.observe("dom:loaded", function() {
+              console.log("here");
+              new Ajax.JSONRequest("./logs.json", {
+                callbackParamName: "logsCallback",
+              });
+
+            });
+        </script>
+    </body>
+</html>

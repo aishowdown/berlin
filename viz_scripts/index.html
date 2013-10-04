@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <script type="text/javascript" src="prototype.js"></script>
+        <script type="text/javascript" src="jsonp.js"></script>
+        <script type="text/javascript" src="thirdside.js"></script>
+        <script type="text/javascript" src="raphael/raphael.js"></script>
+        <script type="text/javascript" src="raphael/g.raphael.js"></script>
+        <script type="text/javascript" src="raphael/g.pie.js"></script>
+        <script type="text/javascript" src="raphael/raphael-animate-along.js"></script>
+        <script type="text/javascript" src="drawable.js"></script>
+        <script type="text/javascript" src="animated.js"></script>
+        <script type="text/javascript" src="node.js"></script>
+        <script type="text/javascript" src="svg.js"></script>
+        <script type="text/javascript" src="player.js"></script>
+        <script type="text/javascript" src="playback_description.js"></script>
+        <script type="text/javascript" src="playback.js"></script>
+        <script type="text/javascript" src="simulator.js"></script>
+    </head>
+    <body>
+        <div>
+          <span>Game url:</span>
+          <input type="text" id="game_url" style="width: 500px"></input>
+          <button id="load_game">Go</button>
+        </div>
+        <div id="player_list">
+            <div id="info_player_0">
+              <div class="color" style="width: 30px; height: 30px;"></div>
+              <span class="soldiers"></span>
+              <span class="nodes"></span>
+              <span class="score"></span>
+            </div>
+            <div id="info_player_1">
+              <div class="color" style="width: 30px; height: 30px;"></div>
+              <span class="soldiers"></span>
+              <span class="nodes"></span>
+              <span class="score"></span>
+            </div>
+        </div>
+        <div id="controls">
+            <div id="rewind">Rewind</div>
+            <div id="back">Back</div>
+            <div id="play">Play</div>
+            <div id="pause">Pause</div>
+            <div id="next">Next</div>
+            <div id="end">End</div>
+        </div>
+        <div id="progress_bar" style="height: 10px; background-color: black;"></div>
+        <div id="turns"></div>
+        <div id="map" style="position: relative; width: 960px; height: 500px;"></div>
+        <script type="text/javascript">
+            var containers = {
+              "map": "map",
+              "controls": "controls",
+              "player_list": "player-list",
+              "progress_bar": "progress_bar",
+              "turns": "turns"
+            };
+
+            document.observe("dom:loaded", function() {
+              $('load_game').on('click', function(event) {
+                new Ajax.JSONRequest($('game_url').value, {
+                  onComplete: function(response) {
+                    new TS.AIPlayback(
+                      containers,
+                      response.responseJSON.game,
+                      { local: true }
+                    );
+                  }
+                });
+              });
+            });
+        </script>
+    </body>
+</html>
