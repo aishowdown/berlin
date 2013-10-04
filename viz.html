@@ -2,6 +2,33 @@
 
 <html>
     <head>
+        <style>
+          body {
+            background-color: gray;
+          }
+          #controls div {
+            display: inline-block;
+            background-color: orange;
+            border-radius: 3px;
+            padding: 5px;
+          }
+          #controls div:hover {
+            display: inline-block;
+            background-color: red;
+            border-radius: 3px;
+            padding: 5px;
+          }
+          #player_list>div {
+            margin: 20px;
+            display: inline-block;
+          }
+          #player_list>div>div {
+            display: inline-block;
+          }
+          #progress_bar {
+            width: 960px;
+          }
+        </style>
         <script type="text/javascript" src="./viz_scripts/prototype.js"></script>
         <script type="text/javascript" src="./viz_scripts/jsonp.js"></script>
         <script type="text/javascript" src="./viz_scripts/thirdside.js"></script>
@@ -19,29 +46,39 @@
         <script type="text/javascript" src="./viz_scripts/simulator.js"></script>
     </head>
     <body>
-        <div id="player_list">
-            <div id="info_player_0">
-              <div class="color" style="width: 30px; height: 30px;"></div>
-              <span class="soldiers"></span>
-              <span class="nodes"></span>
-              <span class="score"></span>
-            </div>
-            <div id="info_player_1">
-              <div class="color" style="width: 30px; height: 30px;"></div>
-              <span class="soldiers"></span>
-              <span class="nodes"></span>
-              <span class="score"></span>
-            </div>
+        <div class='content'>
+          <div id="player_list">
+              <div id="info_player_0">
+                <div class="color" style="width: 30px; height: 50px;"></div>
+                <div>
+                  <div>soldiers: <span class="soldiers"></span></div>
+                  <div>nodes: <span class="nodes"></span></div>
+                  <div>score: <span class="score"></span></div>
+                </div>
+              </div>
+              <div id="info_player_1">
+                <div class="color" style="width: 30px; height: 50px;"></div>
+                <div>
+                  <div>soldiers: <span class="soldiers"></span></div>
+                  <div>nodes: <span class="nodes"></span></div>
+                  <div>score: <span class="score"></span></div>
+                </div>
+              </div>
+          </div>
         </div>
-        <div id="controls">
-            <div id="rewind">Rewind</div>
-            <div id="back">Back</div>
-            <div id="play">Play</div>
-            <div id="pause">Pause</div>
-            <div id="next">Next</div>
-            <div id="end">End</div>
+        <div class='content'>
+          <div id="controls">
+              <div id="rewind">Rewind</div>
+              <div id="back">Back</div>
+              <div id="play">Play</div>
+              <div id="pause">Pause</div>
+              <div id="next">Next</div>
+              <div id="end">End</div>
+          </div>
         </div>
-        <div id="progress_bar" style="height: 10px; background-color: black;"></div>
+        <div style='width: 960px;'>
+          <div id="progress_bar" style="height: 10px; background-color: black;"></div>
+        </div>
         <div id="turns"></div>
         <div id="map" style="position: relative; width: 960px; height: 500px;"></div>
         <script type="text/javascript">
