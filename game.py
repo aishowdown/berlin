@@ -9,10 +9,6 @@ from datetime import datetime
 from node import Node
 import json
 
-#from map import Map
-#import actions
-
-
 
 class Game:
 
@@ -58,13 +54,11 @@ class Game:
                 self.NODES[toIndex].addNeighbor(fromIndex) #soft link to make the in faster self.NODES[fromIndex])
 
 
-        #playerIndex = 0
         for positions in map_data['setup'][str(self.NUM_PLAYERS)]:
             for pos in map_data['setup'][str(self.NUM_PLAYERS)][positions]:
                 nodeIndex = pos['node']-1
-                self.NODES[nodeIndex].owner = int(positions) #playerIndex #soft link to make battles easier self.PLAYERS[playerIndex]
+                self.NODES[nodeIndex].owner = int(positions) 
                 self.NODES[nodeIndex].number_of_soldiers = pos['number_of_soldiers']
-            #playerIndex +=1
 
 
     def build_state(self):
@@ -93,7 +87,6 @@ class Game:
             player_number += 1
         self.logfile = logfile
 
-        #create map
         map_data=json.load(open(mapFile))
         self.createMap(map_data)
 
@@ -105,7 +98,7 @@ class Game:
             } for node in self.NODES]
 
     def run(self):
-        #TODO: make this part asynchronouse
+        #TODO: make this part asynchronous
         start_time = datetime.now()
         first = True
         turns = {}
@@ -139,18 +132,6 @@ class Game:
                     }, separators=(',', ': ')),
                     "state" : json.dumps(self.build_state(), separators=(',', ': ')) #self.build_state()
                 }, self.TIME_LIMIT));
-
-                #responses.append(player.send_data({
-                #    "action" : action,
-                #    "infos" : self.INFOS,
-                #    "map" : {
-                #        "types" : self.MAPDATA['map']['representation']['types'],
-                #        "nodes" : self.MAPDATA['map']['representation']['nodes'],
-                #        "paths" : self.MAPDATA['map']['representation']['paths']
-                #    },
-                #    "state" : self.build_state()
-                #}, self.TIME_LIMIT));
-
 
                 if turn < self.NUM_TURNS:
                     # Move Players
