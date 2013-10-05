@@ -24,16 +24,10 @@ class Game:
     MAPDATA = None
     PLAYERS = []
     
-    def __init__(self, ports, mapFile='./maps/default.json', logfile='./logs.json'):
-        #TODO: Figure out a better way of passing things in
-        ports = (ports.split(','))
-        self.NUM_PLAYERS = len(ports)
-
-        #TODO: if players are defined in a wonky order/offset in the maps this could get weird
-        player_number = 0
-        for port in ports:
-            self.PLAYERS.append(NetworkPlayer(player_number, port))
-            player_number += 1
+    def __init__(self, players, mapFile='./maps/default.json', logfile='./logs.json'):
+        self.PLAYERS = players
+        self.NUM_PLAYERS = len(players)
+        
         self.logfile = logfile
 
         map_data=json.load(open(mapFile))
@@ -215,7 +209,10 @@ class Game:
             f.write("logsCallback(%s)" % json.dumps(output))
 
 def main():
-    Game(*sys.argv[1:]).run()
+    ports = sys.argv[1].split(',')
+    players = [NetworkPlayer(player_number, port)
+        for player_number, port in enumerate(ports)]
+    Game(players).run()
 
 if __name__ == '__main__':
     main()
