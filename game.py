@@ -23,6 +23,22 @@ class Game:
     INFOS = None
     MAPDATA = None
     PLAYERS = []
+    
+    def __init__(self, ports, mapFile='./maps/default.json', logfile='./logs.json'):
+        #TODO: Figure out a better way of passing things in
+        ports = (ports.split(','))
+        self.NUM_PLAYERS = len(ports)
+
+        #TODO: if players are defined in a wonky order/offset in the maps this could get weird
+        player_number = 0
+        for port in ports:
+            self.PLAYERS.append(NetworkPlayer(player_number, port))
+            player_number += 1
+        self.logfile = logfile
+
+        map_data=json.load(open(mapFile))
+        self.createMap(map_data)
+
     def createMap(self, map_data):
         self.MAPDATA = map_data
         map_data = map_data['map']['representation']
@@ -74,21 +90,6 @@ class Game:
             })
         return states
 
-
-    def __init__(self, ports, mapFile='./maps/default.json', logfile='./logs.json'):
-        #TODO: Figure out a better way of passing things in
-        ports = (ports.split(','))
-        self.NUM_PLAYERS = len(ports)
-
-        #TODO: if players are defined in a wonky order/offset in the maps this could get weird
-        player_number = 0
-        for port in ports:
-            self.PLAYERS.append(NetworkPlayer(player_number, port))
-            player_number += 1
-        self.logfile = logfile
-
-        map_data=json.load(open(mapFile))
-        self.createMap(map_data)
 
     def getNodeStates(self):
         return [{
