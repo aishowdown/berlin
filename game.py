@@ -117,7 +117,7 @@ class Game:
                 self.INFOS['player_id'] = int(player.id)
 
                 #TODO: maybe make asyncroun
-                responses.append(player.send_data({
+                responses.append(player.RPC({
                     "action" : action, #action,   to make it work like their server
                     "infos" : json.dumps(self.INFOS, separators=(',', ': ')), #self.INFOS,
                     "map" : json.dumps({

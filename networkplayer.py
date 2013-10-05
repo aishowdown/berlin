@@ -11,9 +11,9 @@ class NetworkPlayer():
         self.id = id
         self.port = port
         if(obj):
-            self.send_data(obj, timeout)
+            self.RPC(obj, timeout)
 
-    def send_data(self, obj, timeout=5000):
+    def RPC(self, obj, timeout=5000):
         jsonmap = json.dumps(obj);
         #PUTS IT IN ARGS - switch to otehr encoder
         # import ipdb; ipdb.set_trace();
