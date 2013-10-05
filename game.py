@@ -214,5 +214,10 @@ class Game:
         with open(self.logfile, 'w') as f:
             f.write("logsCallback(%s)" % json.dumps(output))
 
+def main():
+    Game(*sys.argv[1:]).run()
 
-Game(*sys.argv[1:]).run()
+if __name__ == '__main__':
+    main()
+    
+
