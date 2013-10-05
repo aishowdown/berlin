@@ -175,6 +175,9 @@ class Game:
                     turns[turn+1]['post'] = self.getNodeStates()
 
 
+        self.write_log(start_time, turns)
+
+    def write_log(self, start_time, turns):
         output = {"game": {
             "artificial_intelligences": [{"id": None, "name": None, "user_id": None, "port": v.port } for v in self.PLAYERS],
             "created_at": datetime.now().isoformat(),
