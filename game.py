@@ -59,9 +59,9 @@ class Game:
         for path in map_data['paths']:
             fromIndex = path['from']-1
             toIndex = path['to'] - 1
-            self.NODES[fromIndex].addNeighbor(toIndex) #soft link to make the in faster #(self.NODES[toIndex])
+            self.NODES[fromIndex].addNeighbor(toIndex)
             if(not self.DIRECTED):
-                self.NODES[toIndex].addNeighbor(fromIndex) #soft link to make the in faster self.NODES[fromIndex])
+                self.NODES[toIndex].addNeighbor(fromIndex)
 
 
         for positions in map_data['setup'][str(self.NUM_PLAYERS)]:
@@ -86,95 +86,90 @@ class Game:
 
 
     def getNodeStates(self):
-        return [{
-                "node_id": node.id+1,
-                "number_of_soldiers": node.number_of_soldiers,
-                "player_id": node.owner
-            } for node in self.NODES]
+        return [n.getState() for n in self.NODES]
+
+    def single_turn(self, action):
+        turn_dict = {
+            "moves" : [],
+            "spawns": [],
+            "states_post": [],
+            "states_pre" : self.getNodeStates()
+        }
+        responses = []
+        #TODO: make this part asynchronous
+        for player in self.PLAYERS:
+
+            self.INFOS['player_id'] = int(player.id)
+
+            #TODO: maybe make asyncroun
+            responses.append(player.RPC({
+                "action" : action, #action,   to make it work like their server
+                "infos" : json.dumps(self.INFOS, separators=(',', ': ')), #self.INFOS,
+                "map" : json.dumps({
+                    "types" : self.MAPDATA['map']['representation']['types'],
+                    "nodes" : self.MAPDATA['map']['representation']['nodes'],
+                    "paths" : self.MAPDATA['map']['representation']['paths']
+                }, separators=(',', ': ')),
+                "state" : json.dumps(self.build_state(), separators=(',', ': ')) #self.build_state()
+            }, self.TIME_LIMIT));
+
+            if action != 'game_over':
+                # Move Players
+                for response in responses:
+                    try:
+                        for move in response:
+
+                            if not move:
+                                continue;
+                            fromIndex = int(move['from'])-1
+                            toIndex = int(move['to'])-1
+                            fromNode = self.NODES[fromIndex]
+                            toNode = self.NODES[toIndex]
+                            #validationStep
+                            if fromNode and toNode and fromNode.number_of_soldiers >= move['number_of_soldiers']:
+                                if move['number_of_soldiers'] > 0:
+                                    if move['number_of_soldiers'] == int(move['number_of_soldiers']):
+                                        if (toNode.id) in fromNode.neighbors and fromNode.owner == player.id:
+                                            #add to turns for log
+                                            move['player_id'] = player.id
+
+                                            turn_dict['moves'].append(move)
+
+                                            fromNode.number_of_soldiers -= move['number_of_soldiers']
+
+                                            toNode.addFighter(player.id, move['number_of_soldiers'])
+                    except:
+                        print "received invalid results from player %s on %s" % (player.id, player.port)
+
+
+
+                # Fight it out
+                for node in self.NODES:
+                    node.resolveConflicts()
+
+
+                # Give reward
+                for node in self.NODES:
+                    id, player_id, number_of_soldiers = node.giveRewards()
+                    if player_id is not None:
+                        turn_dict['spawns'].append({
+                            "node_id": id+1,
+                            "player_id": player_id,
+                            "number_of_soldiers": number_of_soldiers
+                        })
+                turn_dict['post'] = self.getNodeStates()
+        return turn_dict
+    
+    
+    def actions(self):
+        yield 'game_start'
+        for _ in range(self.NUM_TURNS-1):
+            yield 'turn'
+        yield 'game_over'
 
     def run(self):
-        #TODO: make this part asynchronous
         start_time = datetime.now()
-        first = True
-        turns = {}
-        for turn in range(0, self.NUM_TURNS+1):
-            turns[turn+1] = {
-                "moves" : [],
-                "spawns": [],
-                "states_post": [],
-                "states_pre" : self.getNodeStates()
-            }
-            responses = [];
-            for player in self.PLAYERS:
-
-                action = "turn"
-                if(first):
-                    action = "game_start"
-                    first = False
-                if turn == self.NUM_TURNS:
-                    action = "game_over"
-
-                self.INFOS['player_id'] = int(player.id)
-
-                #TODO: maybe make asyncroun
-                responses.append(player.RPC({
-                    "action" : action, #action,   to make it work like their server
-                    "infos" : json.dumps(self.INFOS, separators=(',', ': ')), #self.INFOS,
-                    "map" : json.dumps({
-                        "types" : self.MAPDATA['map']['representation']['types'],
-                        "nodes" : self.MAPDATA['map']['representation']['nodes'],
-                        "paths" : self.MAPDATA['map']['representation']['paths']
-                    }, separators=(',', ': ')),
-                    "state" : json.dumps(self.build_state(), separators=(',', ': ')) #self.build_state()
-                }, self.TIME_LIMIT));
-
-                if turn < self.NUM_TURNS:
-                    # Move Players
-                    for response in responses:
-                        try:
-                            for move in response:
-
-                                if not move:
-                                    continue;
-                                fromIndex = int(move['from'])-1
-                                toIndex = int(move['to'])-1
-                                fromNode = self.NODES[fromIndex]
-                                toNode = self.NODES[toIndex]
-                                #validationStep
-                                if fromNode and toNode and fromNode.number_of_soldiers >= move['number_of_soldiers']:
-                                    if move['number_of_soldiers'] > 0:
-                                        if move['number_of_soldiers'] == int(move['number_of_soldiers']):
-                                            if (toNode.id) in fromNode.neighbors and fromNode.owner == player.id:
-                                                #add to turns for log
-                                                move['player_id'] = player.id
-
-                                                turns[turn+1]['moves'].append(move)
-
-                                                fromNode.number_of_soldiers -= move['number_of_soldiers']
-
-                                                toNode.addFighter(player.id, move['number_of_soldiers'])
-                        except:
-                            print "received invalid results from player %s on %s" % (player.id, player.port)
-
-
-
-                    # Fight it out
-                    for node in self.NODES:
-                        node.resolveConflicts()
-
-
-                    # Give reward
-                    for node in self.NODES:
-                        id, player_id, number_of_soldiers = node.giveRewards()
-                        if player_id is not None:
-                            turns[turn+1]['spawns'].append({
-                                "node_id": id+1,
-                                "player_id": player_id,
-                                "number_of_soldiers": number_of_soldiers
-                            })
-                    turns[turn+1]['post'] = self.getNodeStates()
-
-
+        turns = map(self.single_turn, self.actions())
         self.write_log(start_time, turns)
 
     def write_log(self, start_time, turns):
@@ -201,7 +196,7 @@ class Game:
                     "number_of_players": len(self.PLAYERS),
                     "time_limit_per_turn": self.TIME_LIMIT
                 },
-                "turns": turns
+                "turns": dict( (i+1, t) for i,t in enumerate(turns) )
             }
 
 
@@ -209,7 +204,7 @@ class Game:
 
 
         with open(self.logfile, 'w') as f:
-            f.write("logsCallback(%s)" % json.dumps(output))
+            f.write("logsCallback(%s)" % json.dumps(output, indent=2, separators=(', ', ': ')))
 
 def main():
     ports = sys.argv[1].split(',')

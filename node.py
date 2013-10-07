@@ -27,6 +27,12 @@ class Node:
 
         return self.id, self.owner, self.soldiers_per_turn
 
+    def getState(self):
+        return {
+            "node_id": self.id+1,
+            "number_of_soldiers": self.number_of_soldiers,
+            "player_id": self.owner
+        }
     def resolveConflicts(self):
         if len(self.fighting) == 0:
             return
@@ -54,7 +60,8 @@ class Node:
                     max_count += 1
                     max_owner = self.owner
 
-        #everyone kills eachother and owner stays the same (even if 2 other armies larger destroyed eachother)
+        #everyone kills eachother and owner stays the same
+        # (even if 2 other armies larger destroyed eachother)
         if max_count >= 2:
             self.number_of_soldiers = 0
         else:
