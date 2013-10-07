@@ -101,6 +101,49 @@ class Game:
                 "state" : json.dumps(self.build_state(), separators=(',', ': '))
         }
 
+    def apply_responses(self, responses, turn_dict, player):
+        # Move Players
+        for response in responses:
+            try:
+                for move in response:
+                    if not move:
+                        continue;
+                    fromIndex = int(move['from'])-1
+                    toIndex = int(move['to'])-1
+                    fromNode = self.NODES[fromIndex]
+                    toNode = self.NODES[toIndex]
+                    #validationStep
+                    if fromNode and toNode and fromNode.number_of_soldiers >= move['number_of_soldiers']:
+                        if move['number_of_soldiers'] > 0:
+                            if move['number_of_soldiers'] == int(move['number_of_soldiers']):
+                                if (toNode.id) in fromNode.neighbors and fromNode.owner == player.id:
+                                    #add to turns for log
+                                    move['player_id'] = player.id
+
+                                    turn_dict['moves'].append(move)
+
+                                    fromNode.number_of_soldiers -= move['number_of_soldiers']
+
+                                    toNode.addFighter(player.id, move['number_of_soldiers'])
+            except:
+                print "received invalid results from player %s on %s" % (player.id, player.port)
+
+        # Fight it out
+        for node in self.NODES:
+            node.resolveConflicts()
+
+
+        # Give reward
+        for node in self.NODES:
+            id, player_id, number_of_soldiers = node.giveRewards()
+            if player_id is not None:
+                turn_dict['spawns'].append({
+                    "node_id": id+1,
+                    "player_id": player_id,
+                    "number_of_soldiers": number_of_soldiers
+                })
+        turn_dict['post'] = self.getNodeStates()
+ 
     def single_turn(self, action):
         turn_dict = {
             "moves" : [],
@@ -114,50 +157,9 @@ class Game:
             responses.append(player.RPC(self.getRequest(player, action), self.TIME_LIMIT));
 
             if action != 'game_over':
-                # Move Players
-                for response in responses:
-                    try:
-                        for move in response:
+                self.apply_responses(responses, turn_dict, player)
+                
 
-                            if not move:
-                                continue;
-                            fromIndex = int(move['from'])-1
-                            toIndex = int(move['to'])-1
-                            fromNode = self.NODES[fromIndex]
-                            toNode = self.NODES[toIndex]
-                            #validationStep
-                            if fromNode and toNode and fromNode.number_of_soldiers >= move['number_of_soldiers']:
-                                if move['number_of_soldiers'] > 0:
-                                    if move['number_of_soldiers'] == int(move['number_of_soldiers']):
-                                        if (toNode.id) in fromNode.neighbors and fromNode.owner == player.id:
-                                            #add to turns for log
-                                            move['player_id'] = player.id
-
-                                            turn_dict['moves'].append(move)
-
-                                            fromNode.number_of_soldiers -= move['number_of_soldiers']
-
-                                            toNode.addFighter(player.id, move['number_of_soldiers'])
-                    except:
-                        print "received invalid results from player %s on %s" % (player.id, player.port)
-
-
-
-                # Fight it out
-                for node in self.NODES:
-                    node.resolveConflicts()
-
-
-                # Give reward
-                for node in self.NODES:
-                    id, player_id, number_of_soldiers = node.giveRewards()
-                    if player_id is not None:
-                        turn_dict['spawns'].append({
-                            "node_id": id+1,
-                            "player_id": player_id,
-                            "number_of_soldiers": number_of_soldiers
-                        })
-                turn_dict['post'] = self.getNodeStates()
         return turn_dict
     
     
