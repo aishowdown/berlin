@@ -24,11 +24,11 @@ class Game:
     INFOS = None
     MAPDATA = None
     PLAYERS = []
-    
+
     def __init__(self, players, mapFile='./maps/default.json', logfile='./logs.json'):
         self.PLAYERS = players
         self.NUM_PLAYERS = len(players)
-        
+
         self.logfile = logfile
 
         map_data=json.load(open(mapFile))
@@ -68,7 +68,7 @@ class Game:
         for positions in map_data['setup'][str(self.NUM_PLAYERS)]:
             for pos in map_data['setup'][str(self.NUM_PLAYERS)][positions]:
                 nodeIndex = pos['node']-1
-                self.NODES[nodeIndex].owner = int(positions) 
+                self.NODES[nodeIndex].owner = int(positions)
                 self.NODES[nodeIndex].number_of_soldiers = pos['number_of_soldiers']
 
 
@@ -117,15 +117,14 @@ class Game:
             raise BadMove('not connected', move['from'], move['to'])
         if soldiers == 0:
             return
-       
+
         #add to turns for log
         move['player_id'] = player.id
         turn_dict['moves'].append(move)
         fromNode.number_of_soldiers -= soldiers
         toNode.addFighter(player.id, soldiers)
-    
-    def apply_responses(self, responses, turn_dict):
-        # Move Players
+
+    def move_players(self, responses, turn_dict):
         for player, response in responses:
             for move in response:
                 if not move:
@@ -135,22 +134,31 @@ class Game:
                 except Exception as e:
                     print "received invalid results %s from player %s on %s" % (e, player.id, player.port)
 
-        # Fight it out
-        for node in self.NODES:
-            node.resolveConflicts()
-
-
+    def spawn(self):
         # Give reward
+        spawns = []
         for node in self.NODES:
             id, player_id, number_of_soldiers = node.giveRewards()
             if player_id is not None:
-                turn_dict['spawns'].append({
+                spawns.append({
                     "node_id": id+1,
                     "player_id": player_id,
                     "number_of_soldiers": number_of_soldiers
                 })
+        return spawns
+
+    def apply_responses(self, responses, turn_dict):
+        # Move Players
+        self.move_players(responses, turn_dict)
+
+        # Fight it out
+        for node in self.NODES:
+            node.resolveConflicts()
+
+        turn_dict['spawns'] = self.spawn()
+		
         turn_dict['post'] = self.getNodeStates()
- 
+
     def single_turn(self, action):
         turn_dict = {
             "moves" : [],
@@ -166,8 +174,8 @@ class Game:
             self.apply_responses(responses, turn_dict)
 
         return turn_dict
-    
-    
+
+
     def actions(self):
         yield 'game_start'
         for _ in range(self.NUM_TURNS-1):
@@ -181,7 +189,8 @@ class Game:
 
     def write_log(self, start_time, turns):
         output = {"game": {
-            "artificial_intelligences": [{"id": None, "name": None, "user_id": None, "port": v.port } for v in self.PLAYERS],
+            "artificial_intelligences": [{"id": None, "name": None, "user_id": None, "port": v.port }
+                                         for v in self.PLAYERS],
             "created_at": datetime.now().isoformat(),
             "id": None,
             "is_practice": True,
@@ -205,8 +214,6 @@ class Game:
                 },
                 "turns": dict( (i+1, t) for i,t in enumerate(turns) )
             }
-
-
         }}
 
 
@@ -221,5 +228,5 @@ def main():
 
 if __name__ == '__main__':
     main()
-    
+
 

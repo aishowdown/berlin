@@ -450,8 +450,8 @@ logsCallback({
     "map_id": 2, 
     "round_id": null, 
     "last_error": null, 
-    "time_end": "2013-10-07T20:04:37.334298", 
-    "updated_at": "2013-10-07T20:04:37.334306", 
+    "time_end": "2013-10-07T22:35:05.012101", 
+    "updated_at": "2013-10-07T22:35:05.012108", 
     "replay": {
       "turns": {
         "1": {
@@ -14148,8 +14148,8 @@ logsCallback({
       }
     ], 
     "id": null, 
-    "time_start": "2013-10-07T20:04:36.812733", 
-    "created_at": "2013-10-07T20:04:37.334277", 
+    "time_start": "2013-10-07T22:35:04.476432", 
+    "created_at": "2013-10-07T22:35:05.012080", 
     "number_of_turns": 25, 
     "is_practice": true
   }
