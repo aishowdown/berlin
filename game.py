@@ -9,6 +9,7 @@ from datetime import datetime
 from node import Node
 import json
 
+class BadMove(Exception):pass
 
 class Game:
 
@@ -102,23 +103,26 @@ class Game:
         }
 
     def apply_move(self, player, move, turn_dict):
-        fromIndex = int(move['from'])-1
-        toIndex = int(move['to'])-1
-        fromNode = self.NODES[fromIndex]
-        toNode = self.NODES[toIndex]
+        fromNode = self.NODES[int(move['from'])-1]
+        toNode = self.NODES[int(move['to'])-1]
+        soldiers = move['number_of_soldiers']
+
         #validationStep
-        if fromNode and toNode and fromNode.number_of_soldiers >= move['number_of_soldiers']:
-            if move['number_of_soldiers'] > 0:
-                if move['number_of_soldiers'] == int(move['number_of_soldiers']):
-                    if (toNode.id) in fromNode.neighbors and fromNode.owner == player.id:
-                        #add to turns for log
-                        move['player_id'] = player.id
-
-                        turn_dict['moves'].append(move)
-
-                        fromNode.number_of_soldiers -= move['number_of_soldiers']
-
-                        toNode.addFighter(player.id, move['number_of_soldiers'])
+        if fromNode.owner != player.id:
+            raise BadMove('Not your node', move['from'], fromNode.owner, player.id)
+        if fromNode.number_of_soldiers < soldiers:
+            raise BadMove('Not enough soldiers', move['from'],
+                          soldiers, fromNode.number_of_soldiers)
+        if toNode.id not in fromNode.neighbors:
+            raise BadMove('not connected', move['from'], move['to'])
+        if soldiers == 0:
+            return
+       
+        #add to turns for log
+        move['player_id'] = player.id
+        turn_dict['moves'].append(move)
+        fromNode.number_of_soldiers -= soldiers
+        toNode.addFighter(player.id, soldiers)
     
     def apply_responses(self, responses, turn_dict):
         # Move Players
@@ -128,8 +132,8 @@ class Game:
                     continue
                 try:
                     self.apply_move(player, move, turn_dict)
-                except:
-                    print "received invalid results from player %s on %s" % (player.id, player.port)
+                except Exception as e:
+                    print "received invalid results %s from player %s on %s" % (e, player.id, player.port)
 
         # Fight it out
         for node in self.NODES:
