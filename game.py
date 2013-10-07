@@ -101,32 +101,35 @@ class Game:
                 "state" : json.dumps(self.build_state(), separators=(',', ': '))
         }
 
-    def apply_responses(self, responses, turn_dict, player):
+    def apply_move(self, player, move, turn_dict):
+        fromIndex = int(move['from'])-1
+        toIndex = int(move['to'])-1
+        fromNode = self.NODES[fromIndex]
+        toNode = self.NODES[toIndex]
+        #validationStep
+        if fromNode and toNode and fromNode.number_of_soldiers >= move['number_of_soldiers']:
+            if move['number_of_soldiers'] > 0:
+                if move['number_of_soldiers'] == int(move['number_of_soldiers']):
+                    if (toNode.id) in fromNode.neighbors and fromNode.owner == player.id:
+                        #add to turns for log
+                        move['player_id'] = player.id
+
+                        turn_dict['moves'].append(move)
+
+                        fromNode.number_of_soldiers -= move['number_of_soldiers']
+
+                        toNode.addFighter(player.id, move['number_of_soldiers'])
+    
+    def apply_responses(self, responses, turn_dict):
         # Move Players
-        for response in responses:
-            try:
-                for move in response:
-                    if not move:
-                        continue;
-                    fromIndex = int(move['from'])-1
-                    toIndex = int(move['to'])-1
-                    fromNode = self.NODES[fromIndex]
-                    toNode = self.NODES[toIndex]
-                    #validationStep
-                    if fromNode and toNode and fromNode.number_of_soldiers >= move['number_of_soldiers']:
-                        if move['number_of_soldiers'] > 0:
-                            if move['number_of_soldiers'] == int(move['number_of_soldiers']):
-                                if (toNode.id) in fromNode.neighbors and fromNode.owner == player.id:
-                                    #add to turns for log
-                                    move['player_id'] = player.id
-
-                                    turn_dict['moves'].append(move)
-
-                                    fromNode.number_of_soldiers -= move['number_of_soldiers']
-
-                                    toNode.addFighter(player.id, move['number_of_soldiers'])
-            except:
-                print "received invalid results from player %s on %s" % (player.id, player.port)
+        for player, response in responses:
+            for move in response:
+                if not move:
+                    continue
+                try:
+                    self.apply_move(player, move, turn_dict)
+                except:
+                    print "received invalid results from player %s on %s" % (player.id, player.port)
 
         # Fight it out
         for node in self.NODES:
@@ -151,14 +154,12 @@ class Game:
             "states_post": [],
             "states_pre" : self.getNodeStates()
         }
-        responses = []
         #TODO: make this part asynchronous
-        for player in self.PLAYERS:
-            responses.append(player.RPC(self.getRequest(player, action), self.TIME_LIMIT));
+        responses = [(p, p.RPC(self.getRequest(p, action), self.TIME_LIMIT))
+            for p in self.PLAYERS]
 
-            if action != 'game_over':
-                self.apply_responses(responses, turn_dict, player)
-                
+        if action != 'game_over':
+            self.apply_responses(responses, turn_dict)
 
         return turn_dict
     
