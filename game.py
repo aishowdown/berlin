@@ -88,6 +88,19 @@ class Game:
     def getNodeStates(self):
         return [n.getState() for n in self.NODES]
 
+    def getRequest(self, player, action):
+        self.INFOS['player_id'] = int(player.id)
+        return {
+                "action" : action,
+                "infos" : json.dumps(self.INFOS, separators=(',', ': ')),
+                "map" : json.dumps({
+                    "types" : self.MAPDATA['map']['representation']['types'],
+                    "nodes" : self.MAPDATA['map']['representation']['nodes'],
+                    "paths" : self.MAPDATA['map']['representation']['paths']
+                }, separators=(',', ': ')),
+                "state" : json.dumps(self.build_state(), separators=(',', ': '))
+        }
+
     def single_turn(self, action):
         turn_dict = {
             "moves" : [],
@@ -98,20 +111,7 @@ class Game:
         responses = []
         #TODO: make this part asynchronous
         for player in self.PLAYERS:
-
-            self.INFOS['player_id'] = int(player.id)
-
-            #TODO: maybe make asyncroun
-            responses.append(player.RPC({
-                "action" : action, #action,   to make it work like their server
-                "infos" : json.dumps(self.INFOS, separators=(',', ': ')), #self.INFOS,
-                "map" : json.dumps({
-                    "types" : self.MAPDATA['map']['representation']['types'],
-                    "nodes" : self.MAPDATA['map']['representation']['nodes'],
-                    "paths" : self.MAPDATA['map']['representation']['paths']
-                }, separators=(',', ': ')),
-                "state" : json.dumps(self.build_state(), separators=(',', ': ')) #self.build_state()
-            }, self.TIME_LIMIT));
+            responses.append(player.RPC(self.getRequest(player, action), self.TIME_LIMIT));
 
             if action != 'game_over':
                 # Move Players
